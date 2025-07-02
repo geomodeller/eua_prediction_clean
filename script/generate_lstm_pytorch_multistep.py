@@ -5,24 +5,24 @@ from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import os
-# Check if GPU is available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# # Check if GPU is available
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class LSTMModel(nn.Module):
     def __init__(self, n_features, n_outputs):
         super(LSTMModel, self).__init__()
-        self.lstm1 = nn.LSTM(input_size=n_features, hidden_size=512, num_layers=1, batch_first=True, dropout=0.5)
+        self.lstm1 = nn.LSTM(input_size=n_features, hidden_size=1024, num_layers=1, batch_first=True, dropout=0.5)
         self.dropout1 = nn.Dropout(0.2)  # Add a dropout layer after LSTM
-        self.lstm2 = nn.LSTM(input_size=512, hidden_size=512, num_layers=1, batch_first=True, dropout=0.5)
+        self.lstm2 = nn.LSTM(input_size=1024, hidden_size=1024, num_layers=1, batch_first=True, dropout=0.5)
         self.dropout2 = nn.Dropout(0.2)  # Add a dropout layer after LSTM
         self.repeat = n_outputs
-        self.lstm3 = nn.LSTM(input_size=512, hidden_size=512, num_layers=1, batch_first=True, dropout=0.5)
+        self.lstm3 = nn.LSTM(input_size=1024, hidden_size=1024, num_layers=1, batch_first=True, dropout=0.5)
         self.dropout3 = nn.Dropout(0.2)  # Add a dropout layer after LSTM
-        self.lstm4 = nn.LSTM(input_size=512, hidden_size=512, num_layers=1, batch_first=True, dropout=0.5)
+        self.lstm4 = nn.LSTM(input_size=1024, hidden_size=1024, num_layers=1, batch_first=True, dropout=0.5)
         self.dropout4 = nn.Dropout(0.2)  # Add a dropout layer after LSTM
-        self.dense1 = nn.Linear(512, 256)
+        self.dense1 = nn.Linear(1024, 512)
         self.dropout5 = nn.Dropout(0.2)  # Add a dropout layer after LSTM
-        self.dense2 = nn.Linear(256, n_features)
+        self.dense2 = nn.Linear(512, n_features)
 
     def forward(self, x):
         x, _ = self.lstm1(x)
@@ -39,13 +39,13 @@ class LSTMModel(nn.Module):
         x = self.dense2(x)
         return x
 
-def generate_lstm_multi_step(X_train, y_train):
+def generate_lstm_multi_step(X_train, y_train, device):
     _, n_features, n_outputs = X_train.shape[1], X_train.shape[2], y_train.shape[1]
     model = LSTMModel(n_features, n_outputs)
     model.to(device)  # Move the model to the GPU
     return model
 
-def train_lstm_multi_step(model, checkpoint_path, X_train, y_train, epochs=100, batch_size=100, validation_split=0.05, patience=10, verbose=0):
+def train_lstm_multi_step(model, checkpoint_path, X_train, y_train, lr=0.0001, epochs=100, batch_size=100, validation_split=0.05, patience=10, verbose=0):
     # Creating training and validation datasets
     train_size = int((1 - validation_split) * X_train.size(0))
     train_dataset = TensorDataset(X_train[:train_size], y_train[:train_size])
@@ -54,7 +54,7 @@ def train_lstm_multi_step(model, checkpoint_path, X_train, y_train, epochs=100, 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
-    optimizer = optim.AdamW(model.parameters(), lr=0.0001, weight_decay=1e-5)
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-5)
     criterion = nn.MSELoss()
     scheduler = LambdaLR(optimizer, lr_lambda=lambda epoch: 0.995**epoch)  # Adjust lambda function as needed
 
@@ -87,15 +87,17 @@ def train_lstm_multi_step(model, checkpoint_path, X_train, y_train, epochs=100, 
         history['val_loss'].append(val_loss)
         
         if verbose:
-            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss / len(train_loader)}, Val Loss: {val_loss}")
+            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss}, Val Loss: {val_loss}")
             
         if (val_loss < best_loss) and (epoch > 0):
             best_loss = val_loss
             patience_counter = 0
             torch.save(model.state_dict(), checkpoint_path)
-            print(f'flag == {flag}')
-            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss / len(train_loader)}, Val Loss: {val_loss}")
+            print(f'flag == {flag} | new best model is saved')
+            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss}, Val Loss: {val_loss}")
             flag += 1
+        elif epoch%50 == 0:
+            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss}, Val Loss: {val_loss}")
         else:
             patience_counter += 1
             if patience_counter >= patience:

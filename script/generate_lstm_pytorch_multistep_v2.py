@@ -5,8 +5,6 @@ from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import os
-# Check if GPU is available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import torch
 import torch.nn as nn
 
@@ -203,12 +201,12 @@ class LSTMModel(nn.Module):
 #         x = self.dense2(x)
 #         return x
 
-def generate_lstm_multi_step(X_train, y_train):
+def generate_lstm_multi_step(X_train, y_train, device = 'cpu'):
     _, n_features, n_outputs = X_train.shape[1], X_train.shape[2], y_train.shape[1]
     model = LSTMModel(n_features, n_outputs)
     model.to(device)  # Move the model to the GPU
     return model
-def generate_lstm_multi_step_less_complex(X_train, y_train):
+def generate_lstm_multi_step_less_complex(X_train, y_train, device='cpu'):
     _, n_features, n_outputs = X_train.shape[1], X_train.shape[2], y_train.shape[1]
     model = LSTMModel_less_complex(n_features, n_outputs)
     model.to(device)  # Move the model to the GPU

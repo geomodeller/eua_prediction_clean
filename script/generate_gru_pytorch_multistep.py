@@ -5,9 +5,6 @@ from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader, TensorDataset
 import os
 
-# Check if GPU is available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 class GRUModel(nn.Module):
     def __init__(self, n_features, n_outputs):
         super(GRUModel, self).__init__()
@@ -39,7 +36,7 @@ class GRUModel(nn.Module):
         x = self.dense2(x)
         return x
 
-def generate_gru_multi_step(X_train, y_train):
+def generate_gru_multi_step(X_train, y_train, device= 'cpu'):
     _, n_features, n_outputs = X_train.shape[1], X_train.shape[2], y_train.shape[1]
     model = GRUModel(n_features, n_outputs)
     model.to(device)  # Move the model to the GPU
@@ -88,14 +85,14 @@ def train_gru_multi_step(model, checkpoint_path, X_train, y_train, epochs=100, b
         history['val_loss'].append(val_loss)
         
         if verbose:
-            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss / len(train_loader)}, Val Loss: {val_loss}")
+            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss}, Val Loss: {val_loss}")
             
         if (val_loss < best_loss) and (epoch > 0):
             best_loss = val_loss
             patience_counter = 0
             torch.save(model.state_dict(), checkpoint_path)
             print(f'flag == {flag}')
-            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss / len(train_loader)}, Val Loss: {val_loss}")
+            print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {train_loss}, Val Loss: {val_loss}")
             flag += 1
         else:
             patience_counter += 1

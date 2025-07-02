@@ -7,15 +7,39 @@ def visual_all_cross_correlogram(df_all:pd.DataFrame,
                                  col2_lst:list[str],
                                  total_lag:int,
                                  vline = None):
+    """
+    Visualize the cross-correlation between a variable and multiple other variables with different lags.
+
+    Parameters
+    ----------
+    df_all : pd.DataFrame
+        The dataframe containing the time series data.
+    col1 : str
+        The column name of the variable to correlate with all other variables.
+    col2_lst : list[str]
+        A list of column names of the other variables to correlate with `col1`.
+    total_lag : int
+        The total number of lags to calculate the cross-correlation.
+    vline : int or None, optional
+        The position of the vertical line to draw on the plot. If None, no line is drawn. Defaults to None.
+
+    Returns
+    -------
+    None
+    """
+    
+    df = df_all.copy()
+    df['new_index'] = np.arange(len(df))
+    df.set_index('new_index', inplace=True)
     plt.figure(figsize = (10, 3*len(col2_lst)))
     for j, col2 in enumerate(col2_lst):
         corss_corr = []
         for lag in range(1,total_lag):
             tail = []
             head = []
-            for i in range(len(df_all)-lag):
-                head.append(df_all.loc[i    , col1])
-                tail.append(df_all.loc[i+lag, col2])
+            for i in range(len(df)-lag):
+                head.append(df.loc[i    , col1])
+                tail.append(df.loc[i+lag, col2])
             corss_corr.append(np.corrcoef(head, tail)[0][1])
         plt.subplot(len(col2_lst), 1, j+1)
         plt.plot(range(1,total_lag), corss_corr)
@@ -23,6 +47,9 @@ def visual_all_cross_correlogram(df_all:pd.DataFrame,
         plt.grid('on')
         if vline is not None:
             plt.axvline(x = vline, color = 'red')
+
+    plt.xlabel('date difference, days')
+    plt.ylabel('correlation coefficient')
 
 def compute_cross_correlation(df_all:pd.DataFrame,
                               col1:str,
@@ -46,6 +73,10 @@ def compute_cross_correlation(df_all:pd.DataFrame,
     col1 = 'EUA'
     col2 = 'Oil'
     corss_corr = []
+    
+    df_all = df_all.copy()
+    df_all['new_index'] = np.arange(len(df_all))
+    df_all.set_index('new_index', inplace=True)
     for lag in range(1,total_lag):
         tail = []
         head = []
@@ -58,6 +89,9 @@ def compute_cross_correlation(df_all:pd.DataFrame,
         plt.grid('on')
     if return_corr:
         return np.array(corss_corr)
+    
+    plt.xlabel('date difference, days')
+    plt.ylabel('correlation coefficient')
     
 def compute_auto_correlation(df_all: pd.DataFrame, 
                              col: str, 
@@ -76,6 +110,10 @@ def compute_auto_correlation(df_all: pd.DataFrame,
     Returns:
         np.ndarray: auto correlation
     """
+    
+    df_all = df_all.copy()
+    df_all['new_index'] = np.arange(len(df_all))
+    df_all.set_index('new_index', inplace=True)
     auto_corr = []
     for lag in range(1,total_lag):
         tail = []
