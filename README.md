@@ -45,11 +45,8 @@
 ```bash
 eua_prediction_clean/
 │
-├── data/                # 입력 데이터 (경제지표, 에너지 가격 등)
-├── notebooks/           # 분석 및 모델링용 Jupyter 노트북
-├── models/              # 학습된 모델 및 결과 저장
-├── src/                 # 데이터 처리, 모델링 코드
-├── results/             # 시각화 및 분석 결과
+├── script/              # 데이터 처리, 모델링 코드
+├── *.ipynb/             # 각 단계별 자료 처리 및 머신러닝 학습 워크플로
 └── README.md            # 프로젝트 설명 파일 (본 문서)
 ```
 
